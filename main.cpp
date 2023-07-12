@@ -73,9 +73,15 @@ class Item
     
     void change_name()
     {
+      clearExtra();
       std::cout << "Current name: " << m_name
-      << "\n Change name to: ";
-      std::cin >> m_name;
+      << "\nChange name to: ";
+      std::getline(std::cin, m_name);
+      if(std::cin.fail())
+      {
+        std::cin.clear();
+        clearExtra();
+      }
     }
 
     int get_id() {return m_id;}
@@ -91,6 +97,8 @@ int main()
 {
   Item it1{};
   it1.create_item();
+  it1.print_details();
+  it1.change_name();
   it1.print_details();
   return 0;
 }
