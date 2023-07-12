@@ -8,6 +8,28 @@ void clearExtra()
 	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
+template <typename T>
+T prompt_for_numeric(std::string message)
+{
+  while(1)
+  {
+    T _entry;
+    bool _isNumeric {false};
+    std::cout << message;
+    if(std::cin >> _entry)
+    {
+      _isNumeric = true;
+      return _entry;
+    } else {
+      _isNumeric = false;
+      std::cerr << "ERROR: Invalid entry.\n";
+      std::cin.clear();
+      clearExtra();
+      continue;
+    }
+  }
+}
+
 class Item
 {
   private:
@@ -30,20 +52,9 @@ class Item
         std::cin.clear();
         clearExtra();
       }
-      std::cout << "Enter ID: ";
-      if(std::cin >> m_id)
-      {
-        _isNumeric = true;
-      } else {
-        _isNumeric = false;
-        std::cin.clear();
-        clearExtra();
-      }
-
-      std::cout << "Enter price per item ($): ";
-      std::cin >> m_price;
-      std::cout << "Enter quantity currently in stock: ";
-      std::cin >> m_quantity;
+      m_id = prompt_for_numeric<int>("Enter ID: ");
+      m_price = prompt_for_numeric<double>("Enter price ($): ");
+      m_quantity = prompt_for_numeric<int>("Enter stock: ");
     }
 
     void print_details()
