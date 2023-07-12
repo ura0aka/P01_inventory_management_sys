@@ -19,6 +19,11 @@ T prompt_for_numeric(std::string message)
     if(std::cin >> _entry)
     {
       _isNumeric = true;
+      if(_entry < 0)
+      {
+        std::cerr << "Cannot be (less than) < 0.\n";
+        continue;
+      }
       return _entry;
     } else {
       _isNumeric = false;
