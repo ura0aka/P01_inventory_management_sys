@@ -3,9 +3,6 @@
 #include <algorithm>
 #include <vector>
 
-class Item;
-std::vector<Item> u_item_list{}; 
-
 void clearExtra()
 {
   // ignores all of the characters up until newline
@@ -28,6 +25,7 @@ T prompt_for_numeric(std::string message)
         std::cerr << "Cannot be (less than) < 0.\n";
         continue;
       }
+      clearExtra();
       return _entry;
     } else {
       _isNumeric = false;
@@ -38,6 +36,7 @@ T prompt_for_numeric(std::string message)
     }
   }
 }
+
 
 class Item
 {
@@ -55,7 +54,7 @@ class Item
 
     friend std::ostream& operator<< (std::ostream& out, const Item& item)
     {
-      out << item.m_name << item.m_id << item.m_quantity << item.m_price;
+      out << item.m_name;
       return out;
     }
 
@@ -72,8 +71,6 @@ class Item
       }
       m_price = prompt_for_numeric<double>("Enter price ($): ");
       m_quantity = prompt_for_numeric<int>("Enter stock: ");
-
-      u_item_list.emplace_back(std::move(this));
     }
 
     void print_details()
@@ -104,21 +101,43 @@ class Item
     double get_price() {return m_price;}
 };
 
+class Container
+{
+  std::vector<Item> u_item_list{};
+
+  public:
+    Container() = default;
+
+    void add_item(Item& _itm)
+    {
+      u_item_list.emplace_back(_itm);
+    }
+
+    void display_items()
+    {
+      for(auto& i : u_item_list)
+      std::cout << '[' << i << "]\n";
+    }
+};
 
 
 
 int main()
 {
+  Container ct;
   Item it1{};
   it1.create_item();
   it1.print_details();
-  it1.change_name();
+  
+  ct.add_item(it1);
+
   it1.print_details();
   Item it2{};
   it2.create_item();
   it2.print_details();
 
-  for(auto& i : u_item_list)
-    std::cout << '[' << i << "]\n";
+  ct.add_item(it2);
+
+  ct.display_items();
   return 0;
 }
