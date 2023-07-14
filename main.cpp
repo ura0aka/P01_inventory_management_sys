@@ -2,6 +2,9 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <fstream>
+
+std::ofstream g_stock_file;
 
 void clearExtra()
 {
@@ -36,7 +39,6 @@ T prompt_for_numeric(std::string message)
     }
   }
 }
-
 
 class Item
 {
@@ -73,16 +75,25 @@ class Item
       m_quantity = prompt_for_numeric<int>("Enter stock: ");
     }
 
-    void print_details()
+    std::string print_details()
     {
-      std::cout << "================== \n";
-      std::cout << "Name: " << m_name <<
-      "\n ID: " << m_id << "\n Stock: " << m_quantity
-      << "\n Price: $" << m_price << '\n';
-      std::cout << "================== \n";
+      std::string _temp_messg{};
+      _temp_messg = "================== \nName: " 
+      + m_name + "\n ID: " + std::to_string(m_id)
+      + "\n Stock: "  + std::to_string(m_quantity)
+      + "\n Price: $" + std::to_string(m_price) +
+      "\n================== \n";
+      return _temp_messg;
     }
-    
-    void change_name()
+   
+    void update_quantity()
+    {
+      int _temp_qty;
+      _temp_qty = prompt_for_numeric<int>("Enter additional quantity: ");
+      m_quantity += _temp_qty;
+    }
+
+    void update_name()
     {
       clearExtra();
       std::cout << "Current name: " << m_name
@@ -118,26 +129,43 @@ class Container
       for(auto& i : u_item_list)
       std::cout << '[' << i << "]\n";
     }
+
+    std::vector<Item> get_list(){return u_item_list;}
 };
 
+void update_stock(Container& cont)
+{
+  g_stock_file.open("stock.dat");
+  if(g_stock_file.is_open())
+  {
+    for(auto& i : cont.get_list())
+    {
+      g_stock_file << i.print_details() << '\n';
+    }
+    g_stock_file.close();
+  }
 
+  else
+  {
+    std::cerr << "ERROR: Could not open file \n";
+  }
+}
 
 int main()
 {
   Container ct;
   Item it1{};
   it1.create_item();
-  it1.print_details();
-  
-  ct.add_item(it1);
 
-  it1.print_details();
+  ct.add_item(it1);
+  update_stock(ct);
+
   Item it2{};
   it2.create_item();
-  it2.print_details();
 
   ct.add_item(it2);
 
   ct.display_items();
+  update_stock(ct);
   return 0;
 }
