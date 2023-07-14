@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <vector>
+
+class Item;
+std::vector<Item> u_item_list{}; 
 
 void clearExtra()
 {
@@ -38,13 +42,22 @@ T prompt_for_numeric(std::string message)
 class Item
 {
   private:
+    static inline int s_id_generator {1};
     int m_id;
     std::string m_name;
     int m_quantity;
     double m_price;
 
   public:
-    Item() = default;
+    Item() : m_id {s_id_generator ++}
+    {}
+    
+
+    friend std::ostream& operator<< (std::ostream& out, const Item& item)
+    {
+      out << item.m_name << item.m_id << item.m_quantity << item.m_price;
+      return out;
+    }
 
     void create_item()
     {
@@ -57,9 +70,10 @@ class Item
         std::cin.clear();
         clearExtra();
       }
-      m_id = prompt_for_numeric<int>("Enter ID: ");
       m_price = prompt_for_numeric<double>("Enter price ($): ");
       m_quantity = prompt_for_numeric<int>("Enter stock: ");
+
+      u_item_list.emplace_back(std::move(this));
     }
 
     void print_details()
@@ -100,5 +114,11 @@ int main()
   it1.print_details();
   it1.change_name();
   it1.print_details();
+  Item it2{};
+  it2.create_item();
+  it2.print_details();
+
+  for(auto& i : u_item_list)
+    std::cout << '[' << i << "]\n";
   return 0;
 }
