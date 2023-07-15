@@ -4,8 +4,6 @@
 #include <vector>
 #include <fstream>
 
-std::ofstream g_stock_file;
-
 void clearExtra()
 {
   // ignores all of the characters up until newline
@@ -47,7 +45,7 @@ class Item
     int m_id;
     std::string m_name;
     int m_quantity;
-    double m_price;
+    float m_price;
 
   public:
     Item() : m_id {s_id_generator ++}
@@ -78,11 +76,9 @@ class Item
     std::string print_details()
     {
       std::string _temp_messg{};
-      _temp_messg = "================== \nName: " 
-      + m_name + "\n ID: " + std::to_string(m_id)
-      + "\n Stock: "  + std::to_string(m_quantity)
-      + "\n Price: $" + std::to_string(m_price) +
-      "\n================== \n";
+      _temp_messg = std::to_string(m_id) + " "
+      + std::to_string(m_quantity) + " "
+      + std::to_string(m_price) + " " + m_name;
       return _temp_messg;
     }
    
@@ -133,18 +129,37 @@ class Container
     std::vector<Item> get_list(){return u_item_list;}
 };
 
-void update_stock(Container& cont)
+void save_data(Container& cont)
 {
-  g_stock_file.open("stock.dat");
-  if(g_stock_file.is_open())
+  std::ofstream file_out;
+  file_out.open("stock.dat");
+  if(file_out.is_open())
   {
     for(auto& i : cont.get_list())
     {
-      g_stock_file << i.print_details() << '\n';
+      file_out << i.print_details() << '\n';
     }
-    g_stock_file.close();
+    file_out.close();
   }
+  else
+  {
+    std::cerr << "ERROR: Could not open file \n";
+  }
+}
 
+void load_data()
+{
+  std::string line;
+  std::ifstream file_in;
+  file_in.open("stock.dat");
+  if(file_in.is_open())
+  {
+    while(std::getline(file_in,line))
+    {
+      std::cout << line << '\n';
+    }
+    file_in.close();
+  }
   else
   {
     std::cerr << "ERROR: Could not open file \n";
@@ -158,7 +173,7 @@ int main()
   it1.create_item();
 
   ct.add_item(it1);
-  update_stock(ct);
+  save_data(ct);
 
   Item it2{};
   it2.create_item();
@@ -166,6 +181,8 @@ int main()
   ct.add_item(it2);
 
   ct.display_items();
-  update_stock(ct);
+  save_data(ct);
+  
+  load_data();
   return 0;
 }
