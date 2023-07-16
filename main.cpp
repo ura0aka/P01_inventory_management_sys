@@ -131,7 +131,7 @@ class Container
       i.print_details();
     }
 
-    std::vector<Item> get_list() {return u_item_list;}
+    std::vector<Item>& get_list() {return u_item_list;}
 };
 
 
@@ -174,11 +174,10 @@ void load_data()
 
 void add_sales(Container& cont)
 {
-  std::vector<Item> item_list = cont.get_list();
+  std::vector<Item>& item_list = cont.get_list();
   float _total{};
-  std::vector<Item> _sales{};
-
   cont.display_items();
+
   int _id = prompt_for_numeric<int>("Enter id of product: ");
   for(auto& i : item_list)
   {
