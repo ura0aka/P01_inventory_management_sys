@@ -4,6 +4,10 @@
 #include <vector>
 #include <fstream>
 
+class Item;
+class Container;
+
+
 void clearExtra()
 {
   // ignores all of the characters up until newline
@@ -51,7 +55,6 @@ class Item
     Item() : m_id {s_id_generator ++}
     {}
     
-
     friend std::ostream& operator<< (std::ostream& out, const Item& item)
     {
       out << item.m_name;
@@ -72,8 +75,14 @@ class Item
       m_price = prompt_for_numeric<double>("Enter price ($): ");
       m_quantity = prompt_for_numeric<int>("Enter stock: ");
     }
+    
+    void print_details()
+    {
+      std::cout << "Name: " << m_name << "\nId: " << m_id <<
+      "\nQuantity: " << m_quantity << "\nPrice: " << m_price << '\n';
+    }
 
-    std::string print_details()
+    std::string write_details()
     {
       std::string _temp_messg{};
       _temp_messg = std::to_string(m_id) + " "
@@ -82,12 +91,9 @@ class Item
       return _temp_messg;
     }
    
-    void update_quantity()
-    {
-      int _temp_qty;
-      _temp_qty = prompt_for_numeric<int>("Enter additional quantity: ");
-      m_quantity += _temp_qty;
-    }
+    void update_quantity_add(int _temp_qty) {m_quantity += _temp_qty;}
+
+    void update_quantity_subtract(int _temp_qty) {m_quantity -= _temp_qty;}
 
     void update_name()
     {
@@ -111,7 +117,6 @@ class Item
 class Container
 {
   std::vector<Item> u_item_list{};
-
   public:
     Container() = default;
 
@@ -123,11 +128,12 @@ class Container
     void display_items()
     {
       for(auto& i : u_item_list)
-      std::cout << '[' << i << "]\n";
+      i.print_details();
     }
 
-    std::vector<Item> get_list(){return u_item_list;}
+    std::vector<Item> get_list() {return u_item_list;}
 };
+
 
 void save_data(Container& cont)
 {
@@ -137,7 +143,7 @@ void save_data(Container& cont)
   {
     for(auto& i : cont.get_list())
     {
-      file_out << i.print_details() << '\n';
+      file_out << i.write_details() << '\n';
     }
     file_out.close();
   }
@@ -166,23 +172,55 @@ void load_data()
   }
 }
 
+void add_sales(Container& cont)
+{
+  std::vector<Item> item_list = cont.get_list();
+  float _total{};
+  std::vector<Item> _sales{};
+
+  cont.display_items();
+  int _id = prompt_for_numeric<int>("Enter id of product: ");
+  for(auto& i : item_list)
+  {
+    if(_id == i.get_id())
+    {
+      bool valid{false};
+      while(!valid)
+      {
+        int _qty = prompt_for_numeric<int>("Enter quantity: ");
+        if(_qty > i.get_qty())
+        {
+          std::cerr << "ERROR: Not enough in stock \n";
+          continue;
+        }
+        else if(_qty <= i.get_qty())
+        {
+          _total += (_qty * i.get_price());
+          i.update_quantity_subtract(_qty);
+          valid = true;
+        }
+      }
+    }
+  }
+  std::cout << "Total Bill: $" << _total << '\n';
+}
+
 int main()
 {
   Container ct;
+
   Item it1{};
   it1.create_item();
-
   ct.add_item(it1);
   save_data(ct);
 
   Item it2{};
   it2.create_item();
-
   ct.add_item(it2);
-
-  ct.display_items();
   save_data(ct);
-  
-  load_data();
+
+  add_sales(ct);
+  save_data(ct);
+
   return 0;
 }
