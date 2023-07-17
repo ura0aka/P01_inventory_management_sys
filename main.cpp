@@ -45,7 +45,7 @@ T prompt_for_numeric(std::string message)
 class Item
 {
   private:
-    static inline int s_id_generator {1};
+    static inline int s_id_generator {1}; // keep this in mind
     int m_id;
     std::string m_name;
     int m_quantity;
@@ -85,12 +85,17 @@ class Item
     std::string write_details()
     {
       std::string _temp_messg{};
-      _temp_messg = std::to_string(m_id) + " "
-      + std::to_string(m_quantity) + " "
-      + std::to_string(m_price) + " " + m_name;
+      _temp_messg = std::to_string(m_id) + "\n"
+      + std::to_string(m_quantity) + "\n"
+      + std::to_string(m_price) + "\n" + m_name;
       return _temp_messg;
     }
    
+    void set_id(int _id) {m_id = _id;}
+    void set_name(std::string _str) {m_name = _str;}
+    void set_price(int _price) {m_price = _price;}
+    void set_qty(int _quantity) {m_quantity = _quantity;}
+
     void update_quantity_add(int _temp_qty) {m_quantity += _temp_qty;}
 
     void update_quantity_subtract(int _temp_qty) {m_quantity -= _temp_qty;}
@@ -153,16 +158,46 @@ void save_data(Container& cont)
   }
 }
 
-void load_data()
+std::string go_to_line(std::ifstream& f, unsigned int num)
+{
+  std::string str;
+  f.seekg(std::ios::beg);
+  for(int i{0}; i < num; ++i)
+  {
+    f.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+  std::getline(f,str);
+  return str;
+}
+
+// loads data from save file (stock.dat) by creating item and loading previously entered data
+void load_data(Container& cont)
 {
   std::string line;
   std::ifstream file_in;
+
   file_in.open("stock.dat");
   if(file_in.is_open())
   {
+    int count_line;
+    int prod_count{0}; // product count
+    int _count{};
     while(std::getline(file_in,line))
+      ++count_line;
+    prod_count = count_line/4;
+    count_line = 0;
+
+    while(prod_count < _count)
     {
-      std::cout << line << '\n';
+      Item it{};
+      it.set_id(std::stoi(go_to_line(file_in,0+count_line)));
+      it.set_qty(std::stoi(go_to_line(file_in,1+count_line)));
+      it.set_price(std::stof(go_to_line(file_in,2+count_line)));
+      it.set_name(go_to_line(file_in,3+count_line));
+      
+      cont.add_item(it);
+      ++_count;
+      count_line += 4;
     }
     file_in.close();
   }
@@ -177,37 +212,88 @@ void add_sales(Container& cont)
   std::vector<Item>& item_list = cont.get_list();
   float _total{};
   cont.display_items();
-
-  int _id = prompt_for_numeric<int>("Enter id of product: ");
-  for(auto& i : item_list)
+  
+  char _query{'y'};
+  while(_query == 'y' || _query == 'Y')
   {
-    if(_id == i.get_id())
+    int _id = prompt_for_numeric<int>("Enter id of product: ");
+    for(auto& i : item_list)
     {
-      bool valid{false};
-      while(!valid)
+      if(_id == i.get_id())
       {
-        int _qty = prompt_for_numeric<int>("Enter quantity: ");
-        if(_qty > i.get_qty())
+        bool valid{false};
+        while(!valid)
         {
-          std::cerr << "ERROR: Not enough in stock \n";
-          continue;
-        }
-        else if(_qty <= i.get_qty())
-        {
-          _total += (_qty * i.get_price());
-          i.update_quantity_subtract(_qty);
-          valid = true;
+          int _qty = prompt_for_numeric<int>("Enter quantity: ");
+          if(_qty > i.get_qty())
+          {
+            std::cerr << "ERROR: Not enough in stock \n";
+            continue;
+          }
+          else if(_qty <= i.get_qty())
+          {
+            _total += (_qty * i.get_price());
+            i.update_quantity_subtract(_qty);
+            valid = true;
+          }
         }
       }
     }
+    std::cout << "Add more items to order? (y/n): ";
+    std::cin >> _query;
   }
   std::cout << "Total Bill: $" << _total << '\n';
+}
+
+
+
+void run_program(Container& cont)
+{
+  char _query{'y'}; 
+  while(_query == 'y' || _query == 'Y')
+  {
+    int _opt{};
+    std::cout << "##### MENU #####"
+    << "\n1. Create item" << "\n2. Add sales" << "\n3. Display items" << "\n 4. Exit program \n";
+    _opt = prompt_for_numeric<int>("Enter option: ");
+    switch(_opt)
+    {
+      case 1:
+      {
+        Item it{};
+        it.create_item();
+        cont.add_item(it);
+        save_data(cont);
+        break;
+      }
+      case 2:
+      {
+        add_sales(cont);
+        save_data(cont);
+        break;
+      }
+      case 3:
+      {
+        load_data(cont);
+        cont.display_items();
+        break;
+      }
+      case 4:
+      {
+        exit(0);
+      }
+      default: exit(0); break;
+    }
+    std::cout << "Continue? (y/n): ";
+    std::cin >> _query;
+  }
 }
 
 int main()
 {
   Container ct;
 
+  /*
   Item it1{};
   it1.create_item();
   ct.add_item(it1);
@@ -220,6 +306,8 @@ int main()
 
   add_sales(ct);
   save_data(ct);
+  */
+  run_program(ct);
 
   return 0;
 }
