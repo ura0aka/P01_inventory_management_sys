@@ -162,7 +162,7 @@ std::string go_to_line(std::ifstream& f, unsigned int num)
 {
   std::string str;
   f.seekg(std::ios::beg);
-  for(int i{0}; i < num; ++i)
+  for(int i{0}; i<num; ++i)
   {
     f.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
@@ -179,28 +179,34 @@ void load_data(Container& cont)
   file_in.open("stock.dat");
   if(file_in.is_open())
   {
-    int count_line;
+    int count_line{0};
     int prod_count{0}; // product count
-    int _count{};
+    int _count{0};
     while(std::getline(file_in,line))
       ++count_line;
     prod_count = count_line/4;
     count_line = 0;
+    file_in.seekg(std::ios::beg);
 
-    while(prod_count < _count)
+    while(prod_count > _count)
     {
-      Item it{};
-      it.set_id(std::stoi(go_to_line(file_in,0+count_line)));
-      it.set_qty(std::stoi(go_to_line(file_in,1+count_line)));
-      it.set_price(std::stof(go_to_line(file_in,2+count_line)));
-      it.set_name(go_to_line(file_in,3+count_line));
-      
-      cont.add_item(it);
+      std::cout << "Entered while loop" << '\n';
+      Item it;
+      int _temp_id;
+      _temp_id = std::stoi(go_to_line(file_in,0));
+      it.set_id(_temp_id);
+      //it.set_id(std::stoi(go_to_line(file_in,0)));
+      //it.set_qty(std::stoi(go_to_line(file_in,1)));
+      //it.set_price(std::stof(go_to_line(file_in,2)));
+      //it.set_name(go_to_line(file_in,3));
+
+      //cont.add_item(it);
       ++_count;
       count_line += 4;
     }
     file_in.close();
   }
+
   else
   {
     std::cerr << "ERROR: Could not open file \n";
@@ -275,7 +281,7 @@ void run_program(Container& cont)
       case 3:
       {
         load_data(cont);
-        cont.display_items();
+        //cont.display_items();
         break;
       }
       case 4:
