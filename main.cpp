@@ -189,7 +189,6 @@ int count_lines_in_file()
   return prod_count;
 }
 
-
 // loads data from save file (stock.dat) by creating item and loading previously entered data
 void load_data(Container& cont)
 {
@@ -207,16 +206,12 @@ void load_data(Container& cont)
   {
     while(!finished_count)
     {
-      std::cout << "File successfully opened ... \n";
       Item tmp_it{}; // create temporary item
       tmp_it.set_id(std::stoi(go_to_line(file_in,0+count_line)));
       tmp_it.set_qty(std::stoi(go_to_line(file_in,1+count_line)));
       tmp_it.set_price(std::stof(go_to_line(file_in,2+count_line)));
       tmp_it.set_name(go_to_line(file_in,3+count_line));
-    
       cont.add_item(tmp_it);
-      cont.display_items();
-
       ++count;
       count_line += 4;
       if(prod_count == count)
@@ -270,8 +265,6 @@ void add_sales(Container& cont)
   std::cout << "Total Bill: $" << _total << '\n';
 }
 
-
-
 void run_program(Container& cont)
 {
   char _query{'y'}; 
@@ -279,7 +272,7 @@ void run_program(Container& cont)
   {
     int _opt{};
     std::cout << "##### MENU #####"
-    << "\n1. Create item" << "\n2. Add sales" << "\n3. Display items" << "\n 4. Exit program \n";
+    << "\n1. Create item" << "\n2. Add sales" << "\n3. Display items" << "\n 4. Exit \n";
     _opt = prompt_for_numeric<int>("Enter option: ");
     switch(_opt)
     {
@@ -300,7 +293,7 @@ void run_program(Container& cont)
       case 3:
       {
         load_data(cont);
-        //cont.display_items();
+        cont.display_items();
         break;
       }
       case 4:
@@ -317,21 +310,6 @@ void run_program(Container& cont)
 int main()
 {
   Container ct;
-
-  /*
-  Item it1{};
-  it1.create_item();
-  ct.add_item(it1);
-  save_data(ct);
-
-  Item it2{};
-  it2.create_item();
-  ct.add_item(it2);
-  save_data(ct);
-
-  add_sales(ct);
-  save_data(ct);
-  */
   run_program(ct);
 
   return 0;
