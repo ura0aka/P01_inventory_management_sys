@@ -179,38 +179,21 @@ void load_data(Container& cont)
   file_in.open("stock.dat");
   if(file_in.is_open())
   {
-    int count_line{0};
-    int prod_count{0}; // product count
-    int _count{0};
-    while(std::getline(file_in,line))
-      ++count_line;
-    prod_count = count_line/4;
-    count_line = 0;
-    file_in.seekg(std::ios::beg);
-
-    while(prod_count > _count)
-    {
-      std::cout << "Entered while loop" << '\n';
-      Item it;
-      int _temp_id;
-      _temp_id = std::stoi(go_to_line(file_in,0));
-      it.set_id(_temp_id);
-      //it.set_id(std::stoi(go_to_line(file_in,0)));
-      //it.set_qty(std::stoi(go_to_line(file_in,1)));
-      //it.set_price(std::stof(go_to_line(file_in,2)));
-      //it.set_name(go_to_line(file_in,3));
-
-      //cont.add_item(it);
-      ++_count;
-      count_line += 4;
-    }
-    file_in.close();
+    std::cout << "File successfully opened ... \n";
+    Item tmp_it{}; // create temporary item
+    tmp_it.set_id(std::stoi(go_to_line(file_in,0)));
+    tmp_it.set_qty(std::stoi(go_to_line(file_in,1)));
+    tmp_it.set_price(std::stof(go_to_line(file_in,2)));
+    tmp_it.set_name(go_to_line(file_in,3));
+    
+    cont.add_item(tmp_it);
+    cont.display_items(); 
   }
-
   else
   {
     std::cerr << "ERROR: Could not open file \n";
   }
+  file_in.close();
 }
 
 void add_sales(Container& cont)
