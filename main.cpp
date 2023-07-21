@@ -170,24 +170,60 @@ std::string go_to_line(std::ifstream& f, unsigned int num)
   return str;
 }
 
+int count_lines_in_file()
+{
+  std::ifstream f;
+  int count_line{0};
+  int prod_count{0};
+  std::string line;
+  f.open("stock.dat");
+  if(f.is_open())
+  {
+    while(std::getline(f,line))
+    {
+      ++ count_line;
+    }
+    prod_count = count_line/4;
+    std::cout << prod_count << '\n';
+  }
+  return prod_count;
+}
+
+
 // loads data from save file (stock.dat) by creating item and loading previously entered data
 void load_data(Container& cont)
 {
+  int prod_count{0};
+  int count{0};
+  bool finished_count{false};
+  int count_line{0};
   std::string line;
   std::ifstream file_in;
 
   file_in.open("stock.dat");
+  prod_count = count_lines_in_file();
+
   if(file_in.is_open())
   {
-    std::cout << "File successfully opened ... \n";
-    Item tmp_it{}; // create temporary item
-    tmp_it.set_id(std::stoi(go_to_line(file_in,0)));
-    tmp_it.set_qty(std::stoi(go_to_line(file_in,1)));
-    tmp_it.set_price(std::stof(go_to_line(file_in,2)));
-    tmp_it.set_name(go_to_line(file_in,3));
+    while(!finished_count)
+    {
+      std::cout << "File successfully opened ... \n";
+      Item tmp_it{}; // create temporary item
+      tmp_it.set_id(std::stoi(go_to_line(file_in,0+count_line)));
+      tmp_it.set_qty(std::stoi(go_to_line(file_in,1+count_line)));
+      tmp_it.set_price(std::stof(go_to_line(file_in,2+count_line)));
+      tmp_it.set_name(go_to_line(file_in,3+count_line));
     
-    cont.add_item(tmp_it);
-    cont.display_items(); 
+      cont.add_item(tmp_it);
+      cont.display_items();
+
+      ++count;
+      count_line += 4;
+      if(prod_count == count)
+      {
+        finished_count = true;
+      }
+    }
   }
   else
   {
