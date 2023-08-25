@@ -54,7 +54,6 @@ T prompt_for_numeric(std::string message)
 class Datafile
 {
   public:
-
     inline void set_string(const std::string& sString, std::size_t nItem = 0)
     {
       // sets string value of property (for given index, zero by default)
@@ -94,6 +93,20 @@ class Datafile
       return std::atoi(get_string(nItem).c_str());
     }
 
+    inline std::size_t get_size() {return m_vContent.size();}
+
+    inline Datafile& operator[] (const std::string& name)
+    {
+      // check if node's map already contains the object with the given name
+      if(m_mapObjects.count(name) == 0)
+      {
+        // if it does not exist: create object in map, then link the vector index with object name
+        m_mapObjects[name] = m_vecObjects.size();
+        // then create empty object in the vector of objects
+        m_vecObjects.push_back({name, Datafile()});
+      }
+      return m_vecObjects[m_mapObjects[name]].second;
+    }
   private:
     std::vector<std::string> m_vContent {};
     std::vector<std::pair<std::string, Datafile>> m_vecObjects {};
@@ -105,7 +118,7 @@ class Datafile
 class Item
 {
   public:
-    Item() : m_nId{m_nIdGenerator}
+    Item() : m_nId{m_nIdGenerator ++}
     {}
 
     friend std::ostream& operator<< (std::ostream& out, const Item& item)
@@ -210,15 +223,12 @@ int main()
   c1.add_item(i2);
   c1.display_items();
   
-  df.set_string(i1.get_name());
-  df.set_int(i1.get_id(),1);
-  df.set_int(i1.get_qty(),2);
-  df.set_real(i1.get_price(),3);
-  std::cout << df.get_string();
-  std::cout << df.get_int(1);
-  std::cout << df.get_int(2);
-  std::cout << df.get_real(3);
+  df[i1.get_name()]["ID"].set_int(i1.get_id()); 
+  df[i1.get_name()]["Quantity"].set_int(i1.get_qty()); 
+  df[i1.get_name()]["Price"].set_int(i1.get_price()); 
 
-
+  df[i2.get_name()]["ID"].set_int(i2.get_id()); 
+  df[i2.get_name()]["Quantity"].set_int(i2.get_qty()); 
+  df[i2.get_name()]["Price"].set_int(i2.get_price()); 
   return 0;
 }
