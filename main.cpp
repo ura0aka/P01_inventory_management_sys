@@ -116,14 +116,43 @@ class Item
     float m_fPrice;
 };
 
+class Container
+{
+  std::vector<Item> m_vItemVec{};
+
+  public:
+    Container() = default;
+
+    void add_item(Item& item)
+    {
+      m_vItemVec.emplace_back(item);
+    }
+
+    void display_items()
+    {
+      for(auto& itm : m_vItemVec)
+        itm.print_details();
+    }
+
+    std::vector<Item>& get_list() {return m_vItemVec;}
+};
+
 
 int main()
 {
   Item i1;
+  Container c1;
   i1.create_item();
   i1.print_details();
   i1.update_name();
   i1.update_quantity_subtract(prompt_for_numeric<int>(">> Enter quantity to subtract: "));
   i1.print_details();
+
+  Item i2;
+  i2.create_item();
+
+  c1.add_item(i1);
+  c1.add_item(i2);
+  c1.display_items();
   return 0;
 }
