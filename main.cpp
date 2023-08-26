@@ -1,9 +1,14 @@
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <string>
-#include <algorithm>
 #include <vector>
 #include <unordered_map>
+#include <functional>
 #include <fstream>
+#include <stack>
+#include <sstream>
 
 class Item;
 class Container;
@@ -43,13 +48,6 @@ T prompt_for_numeric(std::string message)
   }
 }
 
-// our datafile format for this project:
-// "n_sItemName"
-//  {
-//    m_nId = 5
-//    m_nQuantity = 489
-//    m_fPrice = 4.90
-//  }
 
 class Datafile
 {
@@ -93,7 +91,7 @@ class Datafile
       return std::atoi(get_string(nItem).c_str());
     }
 
-    inline std::size_t get_size() {return m_vContent.size();}
+    inline std::size_t get_size() const {return m_vContent.size();}
 
     inline Datafile& operator[] (const std::string& name)
     {
@@ -105,8 +103,60 @@ class Datafile
         // then create empty object in the vector of objects
         m_vecObjects.push_back({name, Datafile()});
       }
+      // if exists: return the object by getting its index from the map (m_mapObjects)
+      // we use the index to look up the element in the vector of objets (m_vecObjects)
+      // essentially what we return is: std::vector<std::pair<std::string, *DATAFILE*>>
       return m_vecObjects[m_mapObjects[name]].second;
     }
+
+    // our datafile format for this project:
+// "n_sItemName"
+//  {
+//    m_nId = 5
+//    m_nQuantity = 489
+//    m_fPrice = 4.90
+//  }
+
+    // == Writing to file ==
+    inline static bool write_to_file(const Datafile& n, const std::string& sFileName,
+        const std::string& sIndent = "\t")
+    {
+      // lambda function to let datafile write itself recursively
+      std::function<void(const Datafile&, std::ofstream&)> write =
+      [&](const Datafile& n, std::ofstream& file)
+      {
+        for(auto const& property : n.m_vecObjects)
+        {
+          if(property.second.m_vecObjects.empty())
+          {
+            file << property.first << " : ";
+            std::size_t nItems = property.second.get_size();
+            for(std::size_t i{0}; i < nItems; i++)
+            {
+              file << property.second.get_string(i);
+            }
+            file << '\n';
+          }
+          else
+          {
+            file << sIndent << property.first << '\n';
+            // open braces to accomodate children and indent (for formatting)
+            file << sIndent << "{\n";
+            write(property.second, file);
+            file << sIndent << "}\n\n";
+          }
+        }
+      };
+
+      std::ofstream file(sFileName);
+      if(file.is_open())
+      {
+        write(n,file);
+        return true;
+      }
+      return false; // there was an error opening or writing to the file
+    }
+
   private:
     std::vector<std::string> m_vContent {};
     std::vector<std::pair<std::string, Datafile>> m_vecObjects {};
@@ -185,6 +235,7 @@ class Item
     float m_fPrice;
 };
 
+
 class Container
 {
   std::vector<Item> m_vItemVec{};
@@ -229,6 +280,8 @@ int main()
 
   df[i2.get_name()]["ID"].set_int(i2.get_id()); 
   df[i2.get_name()]["Quantity"].set_int(i2.get_qty()); 
-  df[i2.get_name()]["Price"].set_int(i2.get_price()); 
+  df[i2.get_name()]["Price"].set_int(i2.get_price());
+
+  Datafile::write_to_file(df,"test_output1.txt");
   return 0;
 }
