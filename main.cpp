@@ -121,15 +121,26 @@ class Datafile
     inline static bool write_to_file(const Datafile& n, const std::string& sFileName,
         const std::string& sIndent = "\t")
     {
+      std::size_t nIndentCount = 0; // tracks the level of indentation in out output
+
       // lambda function to let datafile write itself recursively
       std::function<void(const Datafile&, std::ofstream&)> write =
       [&](const Datafile& n, std::ofstream& file)
       {
+        auto indent = [&](const std::string& sString, const std::size_t nCount)
+        {
+          std::string sOut;
+          for(std::size_t n{0}; n < nCount; n++)
+            sOut += sString;
+          return sOut;
+        };
+
+        // iterate through each property of the node
         for(auto const& property : n.m_vecObjects)
         {
           if(property.second.m_vecObjects.empty())
           {
-            file << property.first << " : ";
+            file << indent(sIndent, nIndentCount) << property.first << " : ";
             std::size_t nItems = property.second.get_size();
             for(std::size_t i{0}; i < nItems; i++)
             {
@@ -139,13 +150,17 @@ class Datafile
           }
           else
           {
-            file << sIndent << property.first << '\n';
+            file << indent(sIndent, nIndentCount) << property.first << '\n';
             // open braces to accomodate children and indent (for formatting)
-            file << sIndent << "{\n";
+            file << indent(sIndent, nIndentCount) << "{\n";
+            nIndentCount ++;
+            // write out node recursively
             write(property.second, file);
-            file << sIndent << "}\n\n";
+            file << indent(sIndent, nIndentCount) << "}\n\n";
           }
         }
+        if(nIndentCount > 0)
+          nIndentCount --;
       };
 
       std::ofstream file(sFileName);
@@ -276,11 +291,11 @@ int main()
   
   df[i1.get_name()]["ID"].set_int(i1.get_id()); 
   df[i1.get_name()]["Quantity"].set_int(i1.get_qty()); 
-  df[i1.get_name()]["Price"].set_int(i1.get_price()); 
+  df[i1.get_name()]["Price"].set_real(i1.get_price()); 
 
   df[i2.get_name()]["ID"].set_int(i2.get_id()); 
   df[i2.get_name()]["Quantity"].set_int(i2.get_qty()); 
-  df[i2.get_name()]["Price"].set_int(i2.get_price());
+  df[i2.get_name()]["Price"].set_real(i2.get_price());
 
   Datafile::write_to_file(df,"test_output1.txt");
   return 0;
