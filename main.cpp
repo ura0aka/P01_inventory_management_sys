@@ -296,8 +296,7 @@ class Datafile
     bool bItemsCreated {false};
 
     if(file.is_open())
-    {
-      std::cout << "opened file successfully \n";   
+    {   
       // lambda to trim line
       auto trim = [](std::string& s)
       {
@@ -306,54 +305,53 @@ class Datafile
       };
 
       // lambda to go to specified line & return the line's property value
-      auto go_to_line = [&](std::ifstream& f, unsigned int num)
+      auto go_to_line = [&](std::ifstream& f, unsigned int num, bool bTrimFlag)
       {
-        std::string str;
+        std::string line;
         f.seekg(std::ios::beg);
         for(int i{0}; i < num; ++i)
         {
           f.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
-        std::getline(f,str);
-        //std::cout << str << '\n';
-        std::size_t x = str.find_first_of(":");
-        if(x != std::string::npos)
+        std::getline(f,line);
+          
+        if(bTrimFlag == true) // ignore how horrible this is... please
         {
-          sPropertyValue = str.substr(x+1, str.size());
-          trim(str);
+          if(!line.empty())
+          {
+            std::size_t x = line.find_first_of(":");
+            if(x != std::string::npos)
+            {
+              line = line.substr(x+1, line.size());
+              trim(line);
+            }
+          }
         }
-        return str;
+        return line;
       };
         
       while(!bItemsCreated)
       {
-        std::cout << "Entered while loop \n";
         // all items are written in file in a specific order/format (each line is reserved for a specific item property)
         Item tmp_item{};
-        /*
-        tmp_item.set_name(go_to_line(file,0+line_count));
-        tmp_item.set_id(std::stoi(go_to_line(file,2+line_count)));
-        tmp_item.set_price(std::stof(go_to_line(file,3+line_count)));
-        tmp_item.set_qty(std::stoi(go_to_line(file,4+line_count)));
+        tmp_item.set_name(go_to_line(file,0+line_count,0));
+        tmp_item.set_id(std::stoi(go_to_line(file,2+line_count,1)));
+        tmp_item.set_price(std::stof(go_to_line(file,3+line_count,1)));
+        tmp_item.set_qty(std::stoi(go_to_line(file,4+line_count,1)));
         cont.add_item(tmp_item);
-        */
-        std::cout << go_to_line(file,0+line_count) << '\n';
-        std::cout << go_to_line(file,2+line_count) << '\n';
-        std::cout << go_to_line(file,3+line_count) << '\n';
-        std::cout << go_to_line(file,4+line_count) << '\n';
         
         ++count;
         line_count += line_offset;
         if(item_count == count)
           bItemsCreated = true;
       }
-      return true;
     }
     else
     {
       return false; // error, could not read from specified file
     }
     file.close();
+    return true;
   }
 
 
@@ -395,7 +393,7 @@ int main()
 
   //Datafile::write_to_file(df,"test_output1.txt");
 
-  std::cout << count_lines_in_file("test_output1.txt") << '\n';
   Datafile::read_from_file("test_output1.txt", c1);
+  c1.display_items();
   return 0;
 }
