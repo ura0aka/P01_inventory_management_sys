@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -12,7 +13,6 @@
 
 class Item;
 class Container;
-
 
 void clear_extra()
 {
@@ -47,6 +47,118 @@ T prompt_for_numeric(std::string message)
     }
   }
 }
+
+int count_lines_in_file(const std::string& sFileName)
+{    
+  std::ifstream file;
+  const int item_offset{7};
+  int count_line = 0, item_count = 0;
+  std::string line;
+  
+  file.open(sFileName);
+  if(file.is_open())
+  {
+    while(std::getline(file,line))
+    {
+      ++count_line;
+    }
+    item_count = count_line/item_offset;
+  }
+  return item_count;
+}
+
+
+class Item
+{
+  public:
+    Item() : m_nId{m_nIdGenerator ++}
+    {}
+
+    friend std::ostream& operator<< (std::ostream& out, const Item& item)
+    {
+      out << item.m_sItemName;
+      return out;
+    }
+    
+    void create_item()
+    {
+      bool bIsNumeric {false};
+
+      std::cout << ">> Enter name: ";
+      std::getline(std::cin, m_sItemName);
+      if(std::cin.fail())
+      {
+        std::cin.clear();
+        clear_extra();
+      }
+      m_fPrice = prompt_for_numeric<float>(">> Enter price ($): ");
+      m_nQuantity = prompt_for_numeric<int>(">> Enter stock: ");
+    }
+    
+    void print_details()
+    {
+      std::cout << "Name: " << m_sItemName << "\n Id: " << m_nId <<
+        "\n Quantity: " << m_nQuantity << "\n Price: " << m_fPrice << '\n';
+    }
+
+    void set_id(int id) {m_nId = id;}
+    void set_name(std::string str) {m_sItemName = str;}
+    void set_price(int price) {m_fPrice = price;}
+    void set_qty(int qty) {m_nQuantity = qty;}
+
+    int get_id() {return m_nId;}
+    std::string get_name() {return m_sItemName;}
+    float get_price() {return m_fPrice;}
+    int get_qty() {return m_nQuantity;}
+
+    void update_quantity_add(int qty) {m_nQuantity += qty;}
+    void update_quantity_subtract(int qty)
+    {
+      qty <= m_nQuantity ? (m_nQuantity -= qty) : (m_nQuantity = 0);
+    }
+
+    void update_name()
+    {
+      clear_extra();
+      std::cout << "Current name: " << m_sItemName
+        << "\n>> Change name to: ";
+      std::getline(std::cin, m_sItemName);
+      if(std::cin.fail())
+      {
+        std::cin.clear();
+        clear_extra();
+      }
+    }
+
+  private:
+    static inline int m_nIdGenerator {1};
+    int m_nId;
+    std::string m_sItemName;
+    int m_nQuantity;
+    float m_fPrice;
+};
+
+
+class Container
+{
+  std::vector<Item> m_vItemVec{};
+
+  public:
+    Container() = default;
+
+    void add_item(Item& item)
+    {
+      m_vItemVec.emplace_back(item);
+    }
+
+    void display_items()
+    {
+      for(auto& itm : m_vItemVec)
+        itm.print_details();
+    }
+
+    std::vector<Item>& get_list() {return m_vItemVec;}
+};
 
 
 class Datafile
@@ -172,6 +284,79 @@ class Datafile
       return false; // there was an error opening or writing to the file
     }
 
+
+  // reading from file into the program
+  inline static bool read_from_file(const std::string& sFileName, Container& cont)
+  {
+    std::ifstream file(sFileName);
+    std::string sPropertyValue = "";
+    const int line_offset{7};
+    int item_count = count_lines_in_file(sFileName);
+    int count = 0, line_count = 0;     
+    bool bItemsCreated {false};
+
+    if(file.is_open())
+    {
+      std::cout << "opened file successfully \n";   
+      // lambda to trim line
+      auto trim = [](std::string& s)
+      {
+        s.erase(0,s.find_first_not_of(" \t\n\r\f\v")); // erase portion of string from index zero to the specified 
+        s.erase(s.find_last_not_of(" \t\n\r\f\v")+1);        
+      };
+
+      // lambda to go to specified line & return the line's property value
+      auto go_to_line = [&](std::ifstream& f, unsigned int num)
+      {
+        std::string str;
+        f.seekg(std::ios::beg);
+        for(int i{0}; i < num; ++i)
+        {
+          f.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
+        std::getline(f,str);
+        //std::cout << str << '\n';
+        std::size_t x = str.find_first_of(":");
+        if(x != std::string::npos)
+        {
+          sPropertyValue = str.substr(x+1, str.size());
+          trim(str);
+        }
+        return str;
+      };
+        
+      while(!bItemsCreated)
+      {
+        std::cout << "Entered while loop \n";
+        // all items are written in file in a specific order/format (each line is reserved for a specific item property)
+        Item tmp_item{};
+        /*
+        tmp_item.set_name(go_to_line(file,0+line_count));
+        tmp_item.set_id(std::stoi(go_to_line(file,2+line_count)));
+        tmp_item.set_price(std::stof(go_to_line(file,3+line_count)));
+        tmp_item.set_qty(std::stoi(go_to_line(file,4+line_count)));
+        cont.add_item(tmp_item);
+        */
+        std::cout << go_to_line(file,0+line_count) << '\n';
+        std::cout << go_to_line(file,2+line_count) << '\n';
+        std::cout << go_to_line(file,3+line_count) << '\n';
+        std::cout << go_to_line(file,4+line_count) << '\n';
+        
+        ++count;
+        line_count += line_offset;
+        if(item_count == count)
+          bItemsCreated = true;
+      }
+      return true;
+    }
+    else
+    {
+      return false; // error, could not read from specified file
+    }
+    file.close();
+  }
+
+
   private:
     std::vector<std::string> m_vContent {};
     std::vector<std::pair<std::string, Datafile>> m_vecObjects {};
@@ -179,102 +364,9 @@ class Datafile
 };
 
 
-
-class Item
-{
-  public:
-    Item() : m_nId{m_nIdGenerator ++}
-    {}
-
-    friend std::ostream& operator<< (std::ostream& out, const Item& item)
-    {
-      out << item.m_sItemName;
-      return out;
-    }
-    
-    void create_item()
-    {
-      bool bIsNumeric {false};
-
-      std::cout << ">> Enter name: ";
-      std::getline(std::cin, m_sItemName);
-      if(std::cin.fail())
-      {
-        std::cin.clear();
-        clear_extra();
-      }
-      m_fPrice = prompt_for_numeric<float>(">> Enter price ($): ");
-      m_nQuantity = prompt_for_numeric<int>(">> Enter stock: ");
-    }
-    
-    void print_details()
-    {
-      std::cout << "Name: " << m_sItemName << "\n Id: " << m_nId <<
-        "\n Quantity: " << m_nQuantity << "\n Price: " << m_fPrice << '\n';
-    }
-
-    void set_id(int id) {m_nId = id;}
-    void set_name(std::string str) {m_sItemName = str;}
-    void set_price(int price) {m_fPrice = price;}
-    void set_qty(int qty) {m_nQuantity = qty;}
-
-    int get_id() {return m_nId;}
-    std::string get_name() {return m_sItemName;}
-    float get_price() {return m_fPrice;}
-    int get_qty() {return m_nQuantity;}
-
-    void update_quantity_add(int qty) {m_nQuantity += qty;}
-    void update_quantity_subtract(int qty)
-    {
-      qty <= m_nQuantity ? (m_nQuantity -= qty) : (m_nQuantity = 0);
-    }
-
-    void update_name()
-    {
-      clear_extra();
-      std::cout << "Current name: " << m_sItemName
-        << "\n>> Change name to: ";
-      std::getline(std::cin, m_sItemName);
-      if(std::cin.fail())
-      {
-        std::cin.clear();
-        clear_extra();
-      }
-    }
-
-  private:
-    static inline int m_nIdGenerator {1};
-    int m_nId;
-    std::string m_sItemName;
-    int m_nQuantity;
-    float m_fPrice;
-};
-
-
-class Container
-{
-  std::vector<Item> m_vItemVec{};
-
-  public:
-    Container() = default;
-
-    void add_item(Item& item)
-    {
-      m_vItemVec.emplace_back(item);
-    }
-
-    void display_items()
-    {
-      for(auto& itm : m_vItemVec)
-        itm.print_details();
-    }
-
-    std::vector<Item>& get_list() {return m_vItemVec;}
-};
-
-
 int main()
 {
+  /*    
   Item i1;
   Container c1;
   Datafile df;
@@ -296,7 +388,14 @@ int main()
   df[i2.get_name()]["ID"].set_int(i2.get_id()); 
   df[i2.get_name()]["Quantity"].set_int(i2.get_qty()); 
   df[i2.get_name()]["Price"].set_real(i2.get_price());
+  */
 
-  Datafile::write_to_file(df,"test_output1.txt");
+  Datafile df;
+  Container c1;
+
+  //Datafile::write_to_file(df,"test_output1.txt");
+
+  std::cout << count_lines_in_file("test_output1.txt") << '\n';
+  Datafile::read_from_file("test_output1.txt", c1);
   return 0;
 }
