@@ -5,6 +5,7 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <functional>
 #include <fstream>
@@ -71,7 +72,7 @@ int count_lines_in_file(const std::string& sFileName)
 class Item
 {
   public:
-    Item() : m_nId{m_nIdGenerator ++}
+    Item() : m_nId{m_nIdGenerator += 1}
     {}
 
     friend std::ostream& operator<< (std::ostream& out, const Item& item)
@@ -131,7 +132,7 @@ class Item
     }
 
   private:
-    static inline int m_nIdGenerator {1};
+    static inline int m_nIdGenerator {0};
     int m_nId;
     std::string m_sItemName;
     int m_nQuantity;
@@ -141,23 +142,25 @@ class Item
 
 class Container
 {
-  std::vector<Item> m_vItemVec{};
+  std::map<int,Item> m_mapItems{}; // item ID points to the item object in map
 
   public:
     Container() = default;
 
     void add_item(Item& item)
     {
-      m_vItemVec.emplace_back(item);
+      m_mapItems[item.get_id()] = item; 
     }
 
     void display_items()
     {
-      for(auto& itm : m_vItemVec)
-        itm.print_details();
+      for(std::size_t i{0}; i != m_mapItems.size(); ++i)
+      {
+        m_mapItems[i].print_details();
+      }
     }
 
-    std::vector<Item>& get_list() {return m_vItemVec;}
+    std::map<int,Item> get_map() {return m_mapItems;}
 };
 
 
@@ -336,8 +339,8 @@ class Datafile
         Item tmp_item{};
         tmp_item.set_name(go_to_line(file,0+line_count,0));
         tmp_item.set_id(std::stoi(go_to_line(file,2+line_count,1)));
-        tmp_item.set_price(std::stof(go_to_line(file,3+line_count,1)));
-        tmp_item.set_qty(std::stoi(go_to_line(file,4+line_count,1)));
+        tmp_item.set_qty(std::stoi(go_to_line(file,3+line_count,1)));
+        tmp_item.set_price(std::stof(go_to_line(file,4+line_count,1)));
         cont.add_item(tmp_item);
         
         ++count;
@@ -361,6 +364,48 @@ class Datafile
     std::unordered_map<std::string, std::size_t> m_mapObjects {};
 };
 
+void add_sales(Container& cont)
+{
+  std::map<int,Item> mapItemList = cont.get_map();
+  float fTotalPrice;
+  cont.display_items();
+
+  char cQuery{'y'};
+  while(cQuery == 'y' | cQuery == 'Y')
+  {
+    int nId = prompt_for_numeric<int>("Enter item ID: ");
+    bool bValid{false};
+    if(nId == mapItemList[nId].get_id())
+    {      
+      while(!bValid)
+      {
+        int nQty = prompt_for_numeric<int>("Enter quantity: ");
+        if(nQty > mapItemList[nId].get_qty()) 
+        {
+          std::cerr << "ERROR: Not enough in stock \n";
+          continue;
+        }
+        else if(nQty <= mapItemList[nId].get_qty())
+        {
+          fTotalPrice += (nQty * mapItemList[nId].get_price());
+          mapItemList[nId].update_quantity_subtract(nQty);
+          bValid = true;
+        }
+      }
+    }
+    else
+    {
+      std::cerr << "ERROR: Provided ID does not exist \n";
+    }
+  
+    if(bValid == true)
+    {
+    std::cout << "Add more items to order? (y/n): ";
+      std::cin >> cQuery;
+    }
+    std::cout << "Total bill: $" << fTotalPrice << '\n';
+  }
+}
 
 int main()
 {
@@ -395,5 +440,6 @@ int main()
 
   Datafile::read_from_file("test_output1.txt", c1);
   c1.display_items();
+
   return 0;
 }
