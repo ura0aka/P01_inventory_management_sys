@@ -154,7 +154,7 @@ class Container
 
     void display_items()
     {
-      for(std::size_t i{0}; i != m_mapItems.size(); ++i)
+      for(std::size_t i{1}; i != m_mapItems.size()+1; ++i)
       {
         m_mapItems[i].print_details();
       }
